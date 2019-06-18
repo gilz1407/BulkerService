@@ -1,8 +1,7 @@
+import configparser
 import json
 import os
 import sys
-import threading
-import time
 from flask import Flask, request
 sys.path.append(os.path.abspath('../CrossInfra'))
 from Combination import Combination
@@ -40,7 +39,6 @@ def GenerateBulks():
     maxLength = lst[-1][2]
     if stackLength > maxLength:
         print("Delete: "+str(len(stack)))
-
         del stack[0:1]
         print("Length of the stack after delete: " + str(stackLength) + "\n")
         minLength = minLength = lst[0][2]
@@ -52,57 +50,14 @@ def GenerateBulks():
             forPublish["Bars"] = stack[0:stackLength+1]
             print("To: "+str(index))
 
-            #print("Bars: "+str(stack[0:stackLength]))
             r.lpush('TemplateList', json.dumps(forPublish))
         minLength = minLength + 1
         print("MinLength: " + str(minLength))
 
 
-
-
-
-@app.route('/Bulker/Start',methods=['POST'])
-def StartListen():
-    global redisCheckThread
-    if redisCheckThread is None:
-        listen = True
-        redisCheckThread = RedisCheck()
-        redisCheckThread.start()
-        return "Listening started"
-    else:
-        return "Already listening"
-
-@app.route('/Bulker/Stop/',methods=['POST'])
-def StopListen():
-    global listen
-    listen = False
-    return "Listening stopped"
-
-
-
-class RedisCheck(threading.Thread):
-    global listen
-    def __init__(self):
-        threading.Thread.__init__(self)
-
-    def run(self):
-        r = connect()  # Connect to local Redis instance
-        p = r.pubsub()
-        p.subscribe('Bars')  # Subscribe to Bars channel
-
-        while listen:  # Will stay in loop until START message received
-            print("Waiting For redisStarter...")
-            message = p.get_message()  # Checks for message
-            if message:
-                command = message['data']  # Get data from message
-                bar_json = command.decode('utf8').replace("'", '"')
-                Selector().FindSuitablePattern(bar_json)
-                print("received: " + str(command))  # Breaks loop
-
-            time.sleep(1)
 if __name__ == '__main__':
-    app.config['SERVER_NAME'] = "http://127.0.0.1:5555/"
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    configDef = config['DEFAULT']
+    app.config['SERVER_NAME'] = configDef['url']
     app.run(debug=True)
-
-#app.config['SERVER_NAME'] = "http://127.0.0.1:5555/"
-#app.run(debug=True)
