@@ -37,8 +37,8 @@ def GenerateBulks():
     #lst = comb.GetCombinationLst()
 
     if minLength == 0:
-        minLength = lst[0][2]
-    maxLength = lst[-1][2]
+        minLength = lst[0][1]
+    maxLength = lst[-1][1]
     if stackLength > maxLength:
         print("Delete: "+str(len(stack)))
         del stack[0:1]
