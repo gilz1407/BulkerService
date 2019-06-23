@@ -32,8 +32,10 @@ def GenerateBulks():
     forPublish["from"] = 0
     stackLength = len(stack)
     print("Length of the stack: " + str(stackLength) + "\n")
-    comb.InitCombinations()
-    lst = comb.GetCombinationLst()
+
+    #comb.InitCombinations()
+    #lst = comb.GetCombinationLst()
+
     if minLength == 0:
         minLength = lst[0][2]
     maxLength = lst[-1][2]
@@ -56,6 +58,12 @@ def GenerateBulks():
 
 
 if __name__ == '__main__':
+    # load combination list from redis
+    combLst = r.get("tempComb")
+    l = json.loads(combLst)
+    lst = eval(l['tl'])
+
+
     config = configparser.ConfigParser()
     config.read('config.ini')
     configDef = config['DEFAULT']
