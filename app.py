@@ -1,3 +1,4 @@
+import configparser
 import json
 import os
 import sys
@@ -17,15 +18,12 @@ minLength = 0
 r = connect()
 @app.route('/Bulker/AddBar',methods=['POST'])
 def AddBar():
-    print("##############################################")
     print("minLength: "+str(minLength))
     newBar = request.json
     stack.append(newBar)
     print(str(json.dumps(newBar)))
     GenerateBulks()
-    print("##############################################")
     return ""
-
 
 def GenerateBulks():
     global comb, stack, r, minLength
@@ -60,5 +58,9 @@ if __name__ == '__main__':
     l = json.loads(combLst)
     lst = eval(l['tl'])
 
-    app.config['SERVER_NAME'] = ConfigManager().GetVal('bulkerUrl')
+    global configDef
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    configDef = config['DEFAULT']
+    app.config['SERVER_NAME'] = configDef['url']
     app.run(debug=True)
