@@ -6,7 +6,7 @@ from flask import Flask, request
 sys.path.append(os.path.abspath('../CrossInfra'))
 from Combination import Combination
 from RedisManager import connect
-from ConfigManager import ConfigManager
+
 app = Flask(__name__)
 
 listen = True
