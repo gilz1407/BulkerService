@@ -4,7 +4,6 @@ import os
 import sys
 from flask import Flask, request
 sys.path.append(os.path.abspath('../CrossInfra'))
-from Combination import Combination
 from RedisManager import connect
 
 app = Flask(__name__)
@@ -12,7 +11,6 @@ app = Flask(__name__)
 listen = True
 redisCheckThread = None
 stack = []
-comb = Combination()
 forPublish = {}
 minLength = 0
 r = connect()
@@ -47,7 +45,7 @@ def GenerateBulks():
             forPublish["Bars"] = stack[0:stackLength+1]
             print("To: "+str(index))
 
-            r.lpush(ConfigManager().GetVal('bulker_publishOn'), json.dumps(forPublish))
+            r.lpush(configDef['publishOn'], json.dumps(forPublish))
         minLength = minLength + 1
         print("MinLength: " + str(minLength))
 
