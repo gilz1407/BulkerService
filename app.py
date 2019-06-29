@@ -1,10 +1,7 @@
 import configparser
 import json
-import os
-import sys
 from flask import Flask, request
-sys.path.append(os.path.abspath('../CrossInfra'))
-from RedisManager import connect
+from RedisConnection import connect
 
 app = Flask(__name__)
 
@@ -16,15 +13,14 @@ minLength = 0
 r = connect()
 @app.route('/Bulker/AddBar',methods=['POST'])
 def AddBar():
-    print("minLength: "+str(minLength))
     newBar = request.json
     stack.append(newBar)
-    print(str(json.dumps(newBar)))
+    print("Got new bar: "+str(json.dumps(newBar)))
     GenerateBulks()
     return ""
 
 def GenerateBulks():
-    global comb, stack, r, minLength
+    global stack, r, minLength
     forPublish["from"] = 0
     stackLength = len(stack)
     print("Length of the stack: " + str(stackLength) + "\n")
@@ -36,19 +32,14 @@ def GenerateBulks():
         print("Delete: "+str(len(stack)))
         del stack[0:1]
         print("Length of the stack after delete: " + str(stackLength) + "\n")
-        minLength = minLength = lst[0][2]
-        print("MinLength after delete: " + str(minLength))
+        minLength = minLength - lst[0][1]
     if stackLength >= minLength:
-        print("First element on stack: "+str(stack[0]))
         for index in range(minLength, stackLength+1):
             forPublish["To"] = index
             forPublish["Bars"] = stack[0:stackLength+1]
-            print("To: "+str(index))
-
+            print("From: " + str(stack[0]) + " To: " + str(index))
             r.lpush(configDef['publishOn'], json.dumps(forPublish))
         minLength = minLength + 1
-        print("MinLength: " + str(minLength))
-
 
 if __name__ == '__main__':
     # load combination list from redis
