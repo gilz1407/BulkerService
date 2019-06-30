@@ -1,5 +1,7 @@
 import configparser
 import json
+import os
+
 from flask import Flask, request
 from RedisConnection import connect
 
@@ -51,5 +53,5 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('config.ini')
     configDef = config['DEFAULT']
-    app.config['SERVER_NAME'] = configDef['url']
+    app.config['SERVER_NAME'] = os.getenv("Bulker_HOST")
     app.run(debug=True)
