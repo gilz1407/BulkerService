@@ -1,6 +1,7 @@
 import os
 import redis
 
+redisCon = None
 def connect():
     global redisCon
     if redisCon is None:
