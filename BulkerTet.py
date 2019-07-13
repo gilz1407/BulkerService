@@ -5,6 +5,8 @@ def streamBars():
     close = 1
     min = 1
     max = 1
+
+    res = requests.post('http://127.0.0.1:7000/Bulker/StartSession')
     while open<50:
         requests.post('http://127.0.0.1:7000/Bulker/AddBar',json={"open":open,"close":close,"min":min,"max":max})
         open = open + 1
