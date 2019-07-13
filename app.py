@@ -14,6 +14,7 @@ r = connect()
 
 @app.route('/Bulker/AddBar',methods=['POST'])
 def AddBar():
+    print("Hello")
     global rc
     rc = RedisCheck()
     newBar = request.json
@@ -76,4 +77,5 @@ if __name__ == '__main__':
     configDef = config['DEFAULT']
     r.delete(configDef['publishOn'])
     app.config['SERVER_NAME'] = os.getenv("Bulker_HOST")
+    print("Before app run")
     app.run(debug=False)
