@@ -12,6 +12,10 @@ stack = []
 forPublish = {}
 r = connect()
 
+@app.route('/Bulker/Hello',methods=['GET'])
+def hello():
+    return "Hello World"
+
 @app.route('/Bulker/AddBar',methods=['POST'])
 def AddBar():
     print("Hello")
