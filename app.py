@@ -18,7 +18,6 @@ def hello():
 
 @app.route('/Bulker/AddBar',methods=['POST'])
 def AddBar():
-    print("Hello")
     global rc
     rc = RedisCheck()
     newBar = request.json
