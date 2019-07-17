@@ -1,6 +1,5 @@
 import configparser
 import json
-import os
 import threading
 from flask import Flask, request
 from RedisConnection import connect
@@ -60,13 +59,11 @@ def GenerateBulks():
     while rc.msg is None:
         pass
 
-
     #Remove the first element on the bar stack
     if len(stack) > lst[-1][1]:
         stack = stack[1:len(stack)]
 
-    while rc.msg is None:
-        pass
+    while rc.msg is None: pass
 
 if __name__ == '__main__':
     # load combination list from redis
@@ -79,6 +76,5 @@ if __name__ == '__main__':
     config.read('config.ini')
     configDef = config['DEFAULT']
     r.delete(configDef['publishOn'])
-    app.config['SERVER_NAME'] = os.getenv("Bulker_HOST")
-    print("Before app run")
-    app.run(debug=False)
+    #app.config['SERVER_NAME'] = os.getenv("Bulker_HOST")
+    app.run(debug=False,host='0.0.0.0')
