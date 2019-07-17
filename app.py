@@ -77,4 +77,4 @@ if __name__ == '__main__':
     configDef = config['DEFAULT']
     r.delete(configDef['publishOn'])
     #app.config['SERVER_NAME'] = os.getenv("Bulker_HOST")
-    app.run(debug=False,host='0.0.0.0')
+    app.run(debug=False, host='0.0.0.0')
