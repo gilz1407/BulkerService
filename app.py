@@ -5,41 +5,36 @@ from flask import Flask, request
 from RedisConnection import connect
 
 app = Flask(__name__)
-rc = None
 redisCheckThread = None
 stack = []
 forPublish = {}
 r = connect()
-
-@app.route('/Bulker/Hello',methods=['GET'])
-def hello():
-    return "Hello World"
+p = r.pubsub()
+p.subscribe("trade")
 
 @app.route('/Bulker/AddBar',methods=['POST'])
 def AddBar():
     global rc
-    rc = RedisCheck()
     newBar = request.json
     stack.append(newBar)
     print("Got new bar: "+str(json.dumps(newBar)))
-    rc.start()
     GenerateBulks()
-    return rc.msg
+    temp = rc.msg
+    rc.msg = None
+    return temp
 
 class RedisCheck(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.msg = None
     def run(self):
-        p = r.pubsub()
-        p.subscribe("trade")
         while True:
             currentMessage = p.get_message()
             if currentMessage is not None:
                 currentMessage = currentMessage['data']
                 if type(currentMessage) == bytes:
                     self.msg = currentMessage.decode("utf-8")
-                    break
+                    #print(self.msg)
 
 def GenerateBulks():
     global stack, rc
@@ -63,7 +58,8 @@ def GenerateBulks():
     if len(stack) > lst[-1][1]:
         stack = stack[1:len(stack)]
 
-    while rc.msg is None: pass
+    while rc.msg is None:
+        pass
 
 if __name__ == '__main__':
     # load combination list from redis
@@ -75,6 +71,10 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('config.ini')
     configDef = config['DEFAULT']
+
+    rc = RedisCheck()
+    rc.start()
+
     r.delete(configDef['publishOn'])
     #app.config['SERVER_NAME'] = os.getenv("Bulker_HOST")
     app.run(debug=False, host='0.0.0.0')
