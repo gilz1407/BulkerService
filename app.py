@@ -1,4 +1,5 @@
 import configparser
+import datetime
 import json
 import threading
 from flask import Flask, request
@@ -8,17 +9,33 @@ app = Flask(__name__)
 redisCheckThread = None
 stack = []
 forPublish = {}
+temp = None
+lastEnter = None
 r = connect()
 p = r.pubsub()
 p.subscribe("trade")
 
 @app.route('/Bulker/AddBar',methods=['POST'])
 def AddBar():
-    global rc
+    global rc, lastEnter
     newBar = request.json
+
+    currDate = datetime.datetime.strptime(newBar["date"], '%Y-%m-%d %H:%M:%S')
+    if lastEnter is not None and lastEnter == currDate.date():
+        r.publish("newBars", json.dumps(newBar))
+        print("lastEnter is not None and lastEnter == currDate.date()")
+
     stack.append(newBar)
-    print("Got new bar: "+str(json.dumps(newBar)))
+    print("Got new bar: " + str(json.dumps(newBar)))
+
     GenerateBulks()
+    if rc.msg is not None and rc.msg != 'none':
+        r.publish("newBars", json.dumps(newBar))
+        lastEnter = currDate.date()
+        print("rc.msg is not None and rc.msg != none")
+
+    while rc.msg is None:
+        pass
     temp = rc.msg
     rc.msg = None
     return temp
@@ -34,7 +51,6 @@ class RedisCheck(threading.Thread):
                 currentMessage = currentMessage['data']
                 if type(currentMessage) == bytes:
                     self.msg = currentMessage.decode("utf-8")
-                    #print(self.msg)
 
 def GenerateBulks():
     global stack, rc
@@ -44,8 +60,15 @@ def GenerateBulks():
                 break
             if (len(stack)-idx) >= 0:
                 forPublish["Bars"] = stack[len(stack)-idx:len(stack)]
+                firstDate = datetime.datetime.strptime(forPublish["Bars"][0]["date"], '%Y-%m-%d %H:%M:%S')
+                lastDate = datetime.datetime.strptime(forPublish["Bars"][-1]["date"], '%Y-%m-%d %H:%M:%S')
+
+                if (((lastDate-firstDate).seconds)/300)+1 != len(forPublish["Bars"]):
+                    break
+
                 forPublish["Last"] = False
-                r.rpush(configDef['publishOn'], json.dumps(forPublish))
+                if firstDate.date() == lastDate.date():
+                    r.rpush(configDef['publishOn'], json.dumps(forPublish))
             else:
                 break
     forPublish["Bars"] = []
@@ -57,9 +80,6 @@ def GenerateBulks():
     #Remove the first element on the bar stack
     if len(stack) > lst[-1][1]:
         stack = stack[1:len(stack)]
-
-    while rc.msg is None:
-        pass
 
 if __name__ == '__main__':
     # load combination list from redis

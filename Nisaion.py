@@ -2,6 +2,12 @@ import os
 import sys
 import time
 
+nb = ['a']
+
+nb.append('b')
+print(nb)
+nb.remove(nb[0])
+nb.pop()
 lst = [-1,0,0,0,1,2,2,2,2,2,3,4,5,5,5,5,5,5,6,7,8,9,10,11,11,11,11,11,11]
 lenMap={}
 prevItem = -1
