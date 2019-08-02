@@ -19,20 +19,15 @@ p.subscribe("trade")
 def AddBar():
     global rc, lastEnter
     newBar = request.json
+    r.publish("newBars", json.dumps(newBar))
 
-    currDate = datetime.datetime.strptime(newBar["date"], '%Y-%m-%d %H:%M:%S')
-    if lastEnter is not None and lastEnter == currDate.date():
-        r.publish("newBars", json.dumps(newBar))
-        print("lastEnter is not None and lastEnter == currDate.date()")
+    rc = RedisCheck()
+    rc.start()
 
     stack.append(newBar)
     print("Got new bar: " + str(json.dumps(newBar)))
 
     GenerateBulks()
-    if rc.msg is not None and rc.msg != 'none':
-        r.publish("newBars", json.dumps(newBar))
-        lastEnter = currDate.date()
-        print("rc.msg is not None and rc.msg != none")
 
     while rc.msg is None:
         pass
@@ -51,13 +46,14 @@ class RedisCheck(threading.Thread):
                 currentMessage = currentMessage['data']
                 if type(currentMessage) == bytes:
                     self.msg = currentMessage.decode("utf-8")
+                    if self.msg is not None:
+                        break
+
 
 def GenerateBulks():
     global stack, rc
     if len(stack) >= lst[0][1]:
         for idx in range(lst[0][1], lst[-1][1]+1):
-            if rc.msg is not None:
-                break
             if (len(stack)-idx) >= 0:
                 forPublish["Bars"] = stack[len(stack)-idx:len(stack)]
                 firstDate = datetime.datetime.strptime(forPublish["Bars"][0]["date"], '%Y-%m-%d %H:%M:%S')
@@ -74,8 +70,6 @@ def GenerateBulks():
     forPublish["Bars"] = []
     forPublish["Last"] = True
     r.rpush(configDef['publishOn'], json.dumps(forPublish))
-    while rc.msg is None:
-        pass
 
     #Remove the first element on the bar stack
     if len(stack) > lst[-1][1]:
@@ -92,8 +86,7 @@ if __name__ == '__main__':
     config.read('config.ini')
     configDef = config['DEFAULT']
 
-    rc = RedisCheck()
-    rc.start()
+
 
     r.delete(configDef['publishOn'])
     #app.config['SERVER_NAME'] = os.getenv("Bulker_HOST")
